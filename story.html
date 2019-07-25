@@ -1,0 +1,60 @@
+<html>
+<head>
+  <title>Reactions story</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style type="text/css">
+  </style>
+</head>
+<body>
+  <h1></h1>
+  <button onclick="post({action: 'authenticate'})">Log in</button>
+  <button onclick="post({action: 'logout'})">Log out</button>
+
+  <h2>Prototype to demo the Reactions authentication on google.com through iframe messaging</h2>
+
+  <h3>What's happening:</h3>
+  <ol>
+    <li>This page renders, and creates an invisible iframe loading a google.com URL</li>
+    <li>The invisible iframe being on google.com can access Google cookies and know the authentication status</li>
+    <li>If logged in, user can use reactions</li>
+    <li>If not logged in, clicking the button above sends a postMessage to the google.com iframe asking for authentication</li>
+    <li>The google.com iframe receives the message and opens a popup to login, with a return URL</li>
+    <li>When the user completes the login form, they get redirected to the return URL</li>
+    <li>That return URL loads a page containing JavaScript that communicates back to the google.com iframe</li>
+    <li>The google.com iframe now knows that the user is authenticated, closes the window, and communicates back to our page</li>
+    <li>User can now use reactions</li>
+  </ol>
+</body>
+<script type="text/javascript">
+  const iframeEl = document.createElement('iframe');
+  iframeEl.setAttribute('sandbox', 'allow-popups allow-same-origin allow-scripts allow-forms');
+  iframeEl.src = '/iframe.html';
+  iframeEl.style = 'display: none;';
+  document.body.appendChild(iframeEl);
+
+  function post(payload) {
+    iframeEl.contentWindow.postMessage(JSON.stringify(payload), window.location.href);
+  }
+
+  function getDataFromMessage(message) {
+    try {
+      return JSON.parse(event.data);
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  }
+
+  window.addEventListener('message', message => {
+    if (message.source === window) {
+      return;
+    }
+
+    console.log('parent message received', message);
+
+    const {authenticated} = getDataFromMessage(message);
+    document.querySelector('h1').textContent =
+        authenticated ? 'Logged in' : 'Logged out';
+  });
+</script>
+</html>

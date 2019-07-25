@@ -1,0 +1,73 @@
+<html>
+<head>
+  <title>Authentication iframe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/javascript">
+    function setCookie(key, value) {
+      document.cookie = `${key}=${value}`;
+    }
+
+    function getCookie(key) {
+      const cookies = document.cookie.split(';');
+
+      for (let i = 0; i < cookies.length; i++) {
+        const [_key, value] = cookies[i].split('=');
+        if (_key === key) return value;
+      }
+
+      return null;
+    }
+
+    function post(payload) {
+      if (window.parent) {
+        window.parent.postMessage(JSON.stringify(payload), window.location.href);
+      }
+    }
+
+    function getDataFromMessage(message) {
+      try {
+        return JSON.parse(event.data);
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
+    }
+
+    let loginWindow = null;
+
+    window.addEventListener('message', message => {
+      if (message.source === window) {
+        return;
+      }
+
+      console.log('iframe message received', message);
+
+      const data = getDataFromMessage(message);
+
+      switch (data.action) {
+        case 'authenticate':
+          // const open = window.open(`https://accounts.google.com/ServiceLogin?continueUrl=${RETURN_URL}`, '_blank');
+          loginWindow = window.open(`/login.html`, '_blank');
+          break;
+        case 'authenticated':
+          loginWindow.close();
+          loginWindow = null;
+          setCookie('authenticated', true)
+          post({authenticated: !!getCookie('authenticated')})
+          break;
+        case 'logout':
+          setCookie('authenticated', '')
+          post({authenticated: !!getCookie('authenticated')})
+          break;
+        default:
+          console.warn('Unsupported action', data.action);
+          break;
+      }
+    });
+
+    post({authenticated: !!getCookie('authenticated')})
+  </script>
+</head>
+<body>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<html>
+<head>
+  <title>Login window</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/javascript">
+    if (window.opener) {
+      window.opener.postMessage(JSON.stringify({action: 'authenticated'}), window.location.href);
+    }
+  </script>
+</head>
+<body>
+  <h1>Successful login, redirecting.</h1>
+</body>
+</html>
